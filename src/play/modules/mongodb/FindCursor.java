@@ -96,7 +96,14 @@ public class FindCursor implements MongoCursor {
 	 */
 	@Override
 	public <T extends MongoModel> T first(){
+		
+		List<T> models = fetch(1,1);
+		
+		if(models == null && models.size() == 0)
+			return null;
+		
 		return (T)fetch(1,1).get(0);
+		
 	}
 	
 	/**
