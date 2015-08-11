@@ -47,23 +47,16 @@ public class FindCursor implements MongoCursor {
 		
 		for(Document document : cursor) {
 				
-			try {
-				
-				ObjectId id = (ObjectId) document.remove("_id");
-				T model = (T) MongoMapper.convertValue(document, clazz);
-				model.set_id(id);
-				
-				resultList.add(model);
-				
-			} catch (IllegalArgumentException e) {
-				e.printStackTrace();
-			} catch (SecurityException e) {
-				e.printStackTrace();
-			}
+			ObjectId id = (ObjectId) document.remove("_id");
+			T model = (T) MongoMapper.convertValue(document, clazz);
+			model.set_id(id);
 			
+			resultList.add(model);
+							
 		}
 
 		return resultList;
+		
 	}
 	
 	/**
@@ -95,14 +88,15 @@ public class FindCursor implements MongoCursor {
 	 * @return - one instance of a MongoModel
 	 */
 	@Override
-	public <T extends MongoModel> T first(){
+	public <T extends MongoModel> T first() {
 		
-		List<T> models = fetch(1,1);
+		Document document = cursor.first();
+					
+		ObjectId id = (ObjectId) document.remove("_id");
+		T model = (T) MongoMapper.convertValue(document, clazz);
+		model.set_id(id);
 		
-		if(models == null && models.size() == 0)
-			return null;
-		
-		return (T)fetch(1,1).get(0);
+		return model;
 		
 	}
 	

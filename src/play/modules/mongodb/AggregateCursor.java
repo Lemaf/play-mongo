@@ -40,21 +40,12 @@ public class AggregateCursor implements MongoCursor {
 		List<T> resultList = new ArrayList<T>();
 				
 		for(Document document : cursor) {
-				
-			try {
-				
-				document.remove("_id");
-				T model = (T) MongoMapper.convertValue(document, clazz);
-//				model.set_id(id);
-				
-				resultList.add(model);
-				
-			} catch (IllegalArgumentException e) {
-				e.printStackTrace();
-			} catch (SecurityException e) {
-				e.printStackTrace();
-			}
+								
+			document.remove("_id");
+			T model = (T) MongoMapper.convertValue(document, clazz);
 			
+			resultList.add(model);
+				
 		}
 
 		return resultList;
@@ -71,9 +62,8 @@ public class AggregateCursor implements MongoCursor {
 			
 		Document document = cursor.first();
 		
-		ObjectId id = (ObjectId) document.remove("_id");
+		document.remove("_id");
 		T model = (T) MongoMapper.convertValue(document, clazz);
-		model.set_id(id);
 		
 		return model;
 		
