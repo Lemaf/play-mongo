@@ -207,6 +207,19 @@ public class MongoDB {
 	}
 	
 	/**
+	 * Provides a cursor to the objects in a collection, matching the query string.
+	 * 
+	 * @param collectionName - the target collection
+	 * @param query - the query Bson
+	 * @param sort - the sort Bson
+	 * @param clazz - the type of MongoModel
+	 * @return - a mongo cursor
+	 */
+	public static FindCursor find(String collectionName, Bson query, Bson sort, Class clazz){
+		return new FindCursor(db().getCollection(collectionName).find(query).sort(sort),clazz);
+	}
+	
+	/**
 	 * Provides a cursor to the objects in a collection.
 	 * 
 	 * @param collectionName - the target collection

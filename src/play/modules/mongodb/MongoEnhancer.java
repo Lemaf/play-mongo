@@ -101,6 +101,10 @@ public class MongoEnhancer extends Enhancer {
         CtMethod find2 = CtMethod.make("public static FindCursor find(){ return MongoDB.find(getCollectionName(),"+entityName+".class); }", ctClass);
         ctClass.addMethod(find2);
       
+        // find3        
+        CtMethod find3 = CtMethod.make("public static FindCursor find(org.bson.conversions.Bson query, org.bson.conversions.Bson sort){ return MongoDB.find(getCollectionName(),query,sort,"+entityName+".class); }", ctClass);
+        ctClass.addMethod(find3);
+        
         // aggregate
         CtMethod aggregate = CtMethod.make("public static AggregateCursor aggregate(java.util.List pipeline) { return MongoDB.aggregate(getCollectionName(), pipeline, "+entityName+".class); }", ctClass);
         ctClass.addMethod(aggregate);

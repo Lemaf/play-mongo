@@ -41,6 +41,10 @@ public class MongoModel {
         throw new UnsupportedOperationException("Please annotate your model with @MongoEntity annotation.");
     }
     
+    public static FindCursor find(Bson query, Bson sort) {
+        throw new UnsupportedOperationException("Please annotate your model with @MongoEntity annotation.");
+    }
+    
     public static AggregateCursor aggregate(List<? extends Bson> pipeline) {
         throw new UnsupportedOperationException("Please annotate your model with @MongoEntity annotation.");
     }
