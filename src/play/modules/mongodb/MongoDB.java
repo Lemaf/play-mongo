@@ -28,6 +28,7 @@ import com.mongodb.ServerAddress;
 import com.mongodb.client.ListIndexesIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.CountOptions;
 import com.mongodb.operation.CreateUserOperation;
 
 
@@ -182,6 +183,29 @@ public class MongoDB {
 	}
 	
 	/**
+	 * Counts the records in the collection matching the filter.
+	 * 
+	 * @param collectionName - the queried collection
+	 * @param filter - the filter
+	 * @return
+	 */
+	public static long count(String collectionName, Bson filter){
+		return db().getCollection(collectionName).count(filter);
+	}
+	
+	/**
+	 * Counts the records in the collection matching the filter and options.
+	 * 
+	 * @param collectionName - the queried collection
+	 * @param filter - the filter
+	 * @param option - the count options
+	 * @return
+	 */
+	public static long count(String collectionName, Bson filter, CountOptions options){
+		return db().getCollection(collectionName).count(filter, options);
+	}
+	
+	/**
 	 * Provides a cursor to the objects in a collection, matching the query string.
 	 * 
 	 * @param collectionName - the target collection
@@ -210,13 +234,13 @@ public class MongoDB {
 	 * Provides a cursor to the objects in a collection, matching the query string.
 	 * 
 	 * @param collectionName - the target collection
-	 * @param query - the query Bson
-	 * @param sort - the sort Bson
+	 * @param filter - the filter
+	 * @param sort - the sort
 	 * @param clazz - the type of MongoModel
 	 * @return - a mongo cursor
 	 */
-	public static FindCursor find(String collectionName, Bson query, Bson sort, Class clazz){
-		return new FindCursor(db().getCollection(collectionName).find(query).sort(sort),clazz);
+	public static FindCursor find(String collectionName, Bson filter, Bson sort, Class clazz){
+		return new FindCursor(db().getCollection(collectionName).find(filter).sort(sort),clazz);
 	}
 	
 	/**

@@ -5,6 +5,8 @@ import java.util.List;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
+import com.mongodb.client.model.CountOptions;
+
 /**
  * This class provides the abstract declarations for all MongoModels.
  * Implementations of these declarations are provided by the MongoEnhancer.
@@ -33,6 +35,14 @@ public class MongoModel {
         throw new UnsupportedOperationException("Please annotate your model with @MongoEntity annotation.");
     }
     
+    public static long count(Bson filter) {
+        throw new UnsupportedOperationException("Please annotate your model with @MongoEntity annotation.");
+    }
+    
+    public static long count(Bson filter, CountOptions options) {
+        throw new UnsupportedOperationException("Please annotate your model with @MongoEntity annotation.");
+    }
+    
     public static FindCursor find(String query, Object... params) {
         throw new UnsupportedOperationException("Please annotate your model with @MongoEntity annotation.");
     }
@@ -41,7 +51,7 @@ public class MongoModel {
         throw new UnsupportedOperationException("Please annotate your model with @MongoEntity annotation.");
     }
     
-    public static FindCursor find(Bson query, Bson sort) {
+    public static FindCursor find(Bson filter, Bson sort) {
         throw new UnsupportedOperationException("Please annotate your model with @MongoEntity annotation.");
     }
     

@@ -92,6 +92,14 @@ public class MongoEnhancer extends Enhancer {
         // count2
         CtMethod count2 = CtMethod.make("public static long count(java.lang.String query, java.lang.Object[] params) { return MongoDB.count(getCollectionName(), query, params); }", ctClass);
         ctClass.addMethod(count2);
+        
+        // count3
+        CtMethod count3 = CtMethod.make("public static long count(org.bson.conversions.Bson filter) { return MongoDB.count(getCollectionName(), filter); }", ctClass);
+        ctClass.addMethod(count3);
+        
+        // count4
+        CtMethod count4 = CtMethod.make("public static long count(org.bson.conversions.Bson filter, com.mongodb.client.model.CountOptions options) { return MongoDB.count(getCollectionName(), filter, options); }", ctClass);
+        ctClass.addMethod(count4);
 
         // find        
         CtMethod find = CtMethod.make("public static FindCursor find(String query, Object[] params){ return MongoDB.find(getCollectionName(),query,params,"+entityName+".class); }", ctClass);
@@ -102,7 +110,7 @@ public class MongoEnhancer extends Enhancer {
         ctClass.addMethod(find2);
       
         // find3        
-        CtMethod find3 = CtMethod.make("public static FindCursor find(org.bson.conversions.Bson query, org.bson.conversions.Bson sort){ return MongoDB.find(getCollectionName(),query,sort,"+entityName+".class); }", ctClass);
+        CtMethod find3 = CtMethod.make("public static FindCursor find(org.bson.conversions.Bson filter, org.bson.conversions.Bson sort){ return MongoDB.find(getCollectionName(),filter,sort,"+entityName+".class); }", ctClass);
         ctClass.addMethod(find3);
         
         // aggregate
