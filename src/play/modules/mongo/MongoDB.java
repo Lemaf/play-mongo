@@ -1,11 +1,14 @@
-package play.modules.mongo;
+package play.modules.mongodb;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
+import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import play.Logger;
@@ -16,13 +19,24 @@ import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 import com.mongodb.Mongo;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoClientOptions;
+import com.mongodb.MongoClientURI;
+import com.mongodb.MongoCredential;
 import com.mongodb.MongoException;
+import com.mongodb.ServerAddress;
+import com.mongodb.client.ListIndexesIterable;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.CountOptions;
+import com.mongodb.operation.CreateUserOperation;
 
 
 public class MongoDB {
 	
-    private static Mongo mongo;
-    private static DB db;
+    private static MongoClient mongo;
+    private static MongoCredential credential;
+    private static MongoDatabase db;
     
     private static String host;
     private static Integer port;
@@ -33,19 +47,16 @@ public class MongoDB {
      * 
      * @return - a reference to the Mongo database
      */
-	public static DB db() {
+	public static MongoDatabase db() {
+		
 		if (db==null){
-			if(Play.configuration.containsKey("mongo.username") && Play.configuration.containsKey("mongo.password")){
-				String username = Play.configuration.getProperty("mongo.username");
-				String passwd = Play.configuration.getProperty("mongo.password");
-				init(username, passwd);
-			}
-			else{
-				init();
-			}
+			
+			init();
+			
 		}
 		
 		return db;
+		
 	}
 	
 	/**
@@ -54,7 +65,7 @@ public class MongoDB {
 	 * @throws UnknownHostException
 	 * @throws MongoException
 	 */
-	public static void init() {		
+	public static void init() {
 		
 		if (host == null || port == null || dbname == null){
 			host = Play.configuration.getProperty("mongo.host", "localhost");
@@ -65,20 +76,29 @@ public class MongoDB {
 		Logger.info("initializing DB ["+host+"]["+port+"]["+dbname+"]");
 		
 		try {
-			mongo = new Mongo(host, port);
-			db = mongo.getDB(dbname);
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
+			
+			if(Play.configuration.containsKey("mongo.username") && Play.configuration.containsKey("mongo.password")){
+			
+				String username = Play.configuration.getProperty("mongo.username");
+				String password = Play.configuration.getProperty("mongo.password");
+				
+				credential = MongoCredential.createCredential(username, dbname, password.toCharArray());
+				mongo = new MongoClient(new ServerAddress(host, port), Collections.singletonList(credential));
+				
+			} else{
+				
+				mongo = new MongoClient(new ServerAddress(host, port));
+				
+			}
+			
+			db = mongo.getDatabase(dbname);
+			
 		} catch (MongoException e) {
 			e.printStackTrace();
 		}
+		
 	}
-	
-	public static void init(String username, String password){
-		init();
-		db.authenticate(username, password.toCharArray());
-	}
-	
+		
 	/**
 	 * Creates an index.
 	 * 
@@ -86,9 +106,11 @@ public class MongoDB {
 	 * @param indexString
 	 */
 	public static void index(String collectionName, String indexString){
-		DBCollection c = db().getCollection(collectionName);
-		DBObject indexKeys = createOrderDbObject(indexString);
-		c.ensureIndex(indexKeys);
+		
+		MongoCollection<Document> c = db().getCollection(collectionName);
+		BasicDBObject indexKeys = createOrderDbObject(indexString);		
+		c.createIndex(indexKeys);
+		
 	}
 	
 	/**
@@ -98,9 +120,11 @@ public class MongoDB {
 	 * @param indexString
 	 */
 	public static void dropIndex(String collectionName, String indexString){
-		DBCollection c = db().getCollection(collectionName);
-		DBObject indexKeys = createOrderDbObject(indexString);
+		
+		MongoCollection<Document> c = db().getCollection(collectionName);
+		BasicDBObject indexKeys = createOrderDbObject(indexString);
 		c.dropIndex(indexKeys);
+		
 	}
 	
 	/** 
@@ -109,8 +133,10 @@ public class MongoDB {
 	 * @param collectionName
 	 */
 	public static void dropIndexes(String collectionName){
-		DBCollection c = db().getCollection(collectionName);
+		
+		MongoCollection<Document> c = db().getCollection(collectionName);
 		c.dropIndexes();
+		
 	}
 	
 	/**
@@ -120,60 +146,19 @@ public class MongoDB {
 	 * @return
 	 */
 	public static String[] getIndexes(String collectionName){
+		
 		List<String> indexNames = new ArrayList<String>();
-		DBCollection c = db().getCollection(collectionName);
-		List<DBObject> indexes = c.getIndexInfo();
-		for (DBObject o : indexes){
-			indexNames.add((String)o.get("name"));
+		MongoCollection<Document> c = db().getCollection(collectionName);
+		
+		ListIndexesIterable<Document> indexes = c.listIndexes();
+		
+		for (Document o : indexes){
+			indexNames.add(o.getString("name"));
 		}
 		
 		return indexNames.toArray(new String[indexNames.size()]);
-	}
-	
-	/**
-	 * Adds a user to the database. We must manually set the readOnly parameter
-	 * because the java mongo API does not yet support it. It will only work
-	 * with database versions > 1.3.
-	 * 
-	 * @param username
-	 * @param passwd
-	 * @param readOnly
-	 */
-	public static void addUser(String username, String passwd, boolean readOnly){
-		db().addUser(username, passwd.toCharArray());
-		DBCollection c = db().getCollection("system.users");
 		
-		DBObject userObj = c.findOne(new BasicDBObject("user", username));
-		if (userObj != null){
-			userObj.put("readOnly", readOnly);
-			c.save(userObj);
-		}
-	}
-	
-	/**
-	 * Removes a user from the database.
-	 * 
-	 * @param username
-	 */
-	public static void removeUser(String username){
-		DBCollection c = db().getCollection("system.users");
-		
-		DBObject userObj = c.findOne(new BasicDBObject("user", username));
-		if (userObj != null){
-			c.remove(userObj);
-		}
-	}
-	
-	/**
-	 * Authenticates a user against a database.
-	 * 
-	 * @param username
-	 * @param password
-	 */
-	public static boolean authenticate(String username, String password){
-		return db().authenticate(username, password.toCharArray());
-	}
-	
+	}	
 	
 	/**
 	 * Counts the records in the collection.
@@ -182,7 +167,7 @@ public class MongoDB {
 	 * @return - number of records in the collection
 	 */
 	public static long count(String collectionName){		
-		return db().getCollection(collectionName).getCount();
+		return db().getCollection(collectionName).count();
 	}
 	
 	/**
@@ -194,7 +179,30 @@ public class MongoDB {
 	 * @return
 	 */
 	public static long count(String collectionName, String query, Object[] params){
-		return db().getCollection(collectionName).getCount(createQueryDbObject(query, params));
+		return db().getCollection(collectionName).count(createQueryDbObject(query, params));
+	}
+	
+	/**
+	 * Counts the records in the collection matching the filter.
+	 * 
+	 * @param collectionName - the queried collection
+	 * @param filter - the filter
+	 * @return
+	 */
+	public static long count(String collectionName, Bson filter){
+		return db().getCollection(collectionName).count(filter);
+	}
+	
+	/**
+	 * Counts the records in the collection matching the filter and options.
+	 * 
+	 * @param collectionName - the queried collection
+	 * @param filter - the filter
+	 * @param option - the count options
+	 * @return
+	 */
+	public static long count(String collectionName, Bson filter, CountOptions options){
+		return db().getCollection(collectionName).count(filter, options);
 	}
 	
 	/**
@@ -206,9 +214,8 @@ public class MongoDB {
 	 * @param clazz - the type of MongoModel
 	 * @return - a mongo cursor
 	 */
-	@SuppressWarnings("rawtypes")
-	public static MongoCursor find(String collectionName, String query, Object[] params, Class clazz){
-		return new MongoCursor(db().getCollection(collectionName).find(createQueryDbObject(query, params)),clazz);
+	public static FindCursor find(String collectionName, String query, Object[] params, Class clazz){
+		return new FindCursor(db().getCollection(collectionName).find(createQueryDbObject(query, params)),clazz);
 	}
 	
 	/**
@@ -218,10 +225,33 @@ public class MongoDB {
 	 * @param collectionName - the target collection
 	 * @param clazz - the type of MongoModel
 	 * @return - a mongo cursor
+	 */ 
+	public static FindCursor find(String collectionName, Class clazz){
+		return new FindCursor(db().getCollection(collectionName).find(),clazz);
+	}
+	
+	/**
+	 * Provides a cursor to the objects in a collection, matching the query string.
+	 * 
+	 * @param collectionName - the target collection
+	 * @param filter - the filter
+	 * @param sort - the sort
+	 * @param clazz - the type of MongoModel
+	 * @return - a mongo cursor
 	 */
-	@SuppressWarnings("rawtypes") 
-	public static MongoCursor find(String collectionName, Class clazz){
-		return new MongoCursor(db().getCollection(collectionName).find(),clazz);
+	public static FindCursor find(String collectionName, Bson filter, Bson sort, Class clazz){
+		return new FindCursor(db().getCollection(collectionName).find(filter).sort(sort),clazz);
+	}
+	
+	/**
+	 * Provides a cursor to the objects in a collection.
+	 * 
+	 * @param collectionName - the target collection
+	 * @param clazz - the type of MongoModel
+	 * @return - a mongo cursor
+	 */ 
+	public static AggregateCursor aggregate(String collectionName, List<? extends Bson> pipeline, Class clazz) {
+		return new AggregateCursor(db().getCollection(collectionName).aggregate(pipeline), clazz);
 	}
 	
 	/**
@@ -232,22 +262,24 @@ public class MongoDB {
 	 * @return - an instance of the model saved
 	 */
 	public static <T extends MongoModel> T save(String collectionName, T model){
+		
 		/* 
 		 * Perhaps it would be better to immediately save the object to the database and assign its id. 
 		 * 
 		 */
-		DBObject dbObject = new BasicDBObject(MongoMapper.convertValue(model, Map.class));
+		Document document = new Document(MongoMapper.convertValue(model, Map.class));
 		
 		if (model.get_id() == null){
-			db().getCollection(collectionName).insert(dbObject);
-			model.set_id((ObjectId)(dbObject.get("_id")));
-		}
-		else{
-			dbObject.removeField("_id");
-			db().getCollection(collectionName).update(new BasicDBObject("_id",model.get_id()), dbObject);
+			document.remove("_id");
+			db().getCollection(collectionName).insertOne(document);
+			model.set_id((ObjectId)(document.get("_id")));
+		} else {
+			document.remove("_id");
+			db().getCollection(collectionName).replaceOne(new BasicDBObject("_id",model.get_id()), document);
 		}
 		
 		return model;
+		
 	}
 	
 	/**
@@ -258,8 +290,8 @@ public class MongoDB {
 	 * @param model - the model
 	 */
 	public static <T extends MongoModel> void delete (String collectionName, T model){
-		DBObject dbObject = new BasicDBObject("_id", model.get_id());
-		db().getCollection(collectionName).remove(dbObject);
+		Document document = new Document("_id", model.get_id());
+		db().getCollection(collectionName).deleteOne(document);
 	}
 	
 	/**
@@ -270,12 +302,14 @@ public class MongoDB {
 	 * @param params - parameters for the query string
 	 * @return - the number of models deleted
 	 */
-	public static long delete (String collectionName, String query, Object[] params){
-		DBObject dbObject = createQueryDbObject(query, params);
-		long deleteCount = db().getCollection(collectionName).getCount(dbObject);
-		db().getCollection(collectionName).remove(dbObject);
+	public static long delete (String collectionName, String query, Object[] params) {
+		
+		BasicDBObject dbObject = createQueryDbObject(query, params);
+		long deleteCount = db().getCollection(collectionName).count(dbObject);
+		db().getCollection(collectionName).deleteMany(dbObject);
 		
 		return deleteCount;
+		
 	}
 	
 	/**
@@ -285,9 +319,12 @@ public class MongoDB {
 	 * @return - the number of models deleted
 	 */
 	public static long deleteAll (String collectionName){
+		
 		long deleteCount = count(collectionName);
 		db().getCollection(collectionName).drop();
+		
 		return deleteCount;
+		
 	}
 	
 	/**
@@ -295,13 +332,13 @@ public class MongoDB {
 	 * 
 	 * @param query - the query string
 	 * @param values - values for the query
-	 * @return - a DBObject representing the query
+	 * @return - a BasicDBObject representing the query
 	 */
-	public static DBObject createQueryDbObject(String query, Object[] values){
+	public static BasicDBObject createQueryDbObject(String query, Object[] values){
 		
 		String keys = extractKeys(query);
 		
-    	DBObject object = new BasicDBObject(); 	
+		BasicDBObject object = new BasicDBObject(); 	
     	String [] keyList = keys.split(",");
     	
     	if (keyList.length > values.length){
@@ -322,11 +359,11 @@ public class MongoDB {
 	 * @param values - values for the query
 	 * @return - a DBObject representing the ordering
 	 */
-	public static DBObject createOrderDbObject(String query){
+	public static BasicDBObject createOrderDbObject(String query){
 		
 		String keys = extractKeys(query);
 		
-    	DBObject object = new BasicDBObject(); 	
+    	BasicDBObject object = new BasicDBObject(); 	
     	String [] keyList = keys.split(",");
     	
 		for (int i = 0; i < keyList.length; i++){

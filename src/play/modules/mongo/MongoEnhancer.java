@@ -1,6 +1,10 @@
-package play.modules.mongo;
+package play.modules.mongodb;
 
 
+
+import java.util.List;
+
+import org.bson.conversions.Bson;
 
 import javassist.CtClass;
 import javassist.CtField;
@@ -20,9 +24,9 @@ import play.classloading.enhancers.Enhancer;
  */
 public class MongoEnhancer extends Enhancer {
 
-	public static final String PACKAGE_NAME = "play.modules.mongo";
+	public static final String PACKAGE_NAME = "play.modules.mongodb";
 	
-	public static final String ENTITY_ANNOTATION_NAME = "play.modules.mongo.MongoEntity";
+	public static final String ENTITY_ANNOTATION_NAME = "play.modules.mongodb.MongoEntity";
 	public static final String ENTITY_ANNOTATION_VALUE = "value";
 	
 	@Override
@@ -88,15 +92,31 @@ public class MongoEnhancer extends Enhancer {
         // count2
         CtMethod count2 = CtMethod.make("public static long count(java.lang.String query, java.lang.Object[] params) { return MongoDB.count(getCollectionName(), query, params); }", ctClass);
         ctClass.addMethod(count2);
+        
+        // count3
+        CtMethod count3 = CtMethod.make("public static long count(org.bson.conversions.Bson filter) { return MongoDB.count(getCollectionName(), filter); }", ctClass);
+        ctClass.addMethod(count3);
+        
+        // count4
+        CtMethod count4 = CtMethod.make("public static long count(org.bson.conversions.Bson filter, com.mongodb.client.model.CountOptions options) { return MongoDB.count(getCollectionName(), filter, options); }", ctClass);
+        ctClass.addMethod(count4);
 
         // find        
-        CtMethod find = CtMethod.make("public static MongoCursor find(String query, Object[] params){ return MongoDB.find(getCollectionName(),query,params,"+entityName+".class); }", ctClass);
+        CtMethod find = CtMethod.make("public static FindCursor find(String query, Object[] params){ return MongoDB.find(getCollectionName(),query,params,"+entityName+".class); }", ctClass);
         ctClass.addMethod(find);
         
         // find2        
-        CtMethod find2 = CtMethod.make("public static MongoCursor find(){ return MongoDB.find(getCollectionName(),"+entityName+".class); }", ctClass);
+        CtMethod find2 = CtMethod.make("public static FindCursor find(){ return MongoDB.find(getCollectionName(),"+entityName+".class); }", ctClass);
         ctClass.addMethod(find2);
       
+        // find3        
+        CtMethod find3 = CtMethod.make("public static FindCursor find(org.bson.conversions.Bson filter, org.bson.conversions.Bson sort){ return MongoDB.find(getCollectionName(),filter,sort,"+entityName+".class); }", ctClass);
+        ctClass.addMethod(find3);
+        
+        // aggregate
+        CtMethod aggregate = CtMethod.make("public static AggregateCursor aggregate(java.util.List pipeline) { return MongoDB.aggregate(getCollectionName(), pipeline, "+entityName+".class); }", ctClass);
+        ctClass.addMethod(aggregate);
+        
         // delete        
         CtMethod delete = CtMethod.make("public void delete() { MongoDB.delete(getCollectionName(), this); }", ctClass);
         ctClass.addMethod(delete);

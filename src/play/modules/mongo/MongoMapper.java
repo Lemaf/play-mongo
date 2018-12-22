@@ -1,4 +1,4 @@
-package play.modules.mongo;
+package play.modules.mongodb;
 
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;

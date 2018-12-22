@@ -1,6 +1,11 @@
-package play.modules.mongo;
+package play.modules.mongodb;
 
+import java.util.List;
+
+import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
+
+import com.mongodb.client.model.CountOptions;
 
 /**
  * This class provides the abstract declarations for all MongoModels.
@@ -30,11 +35,27 @@ public class MongoModel {
         throw new UnsupportedOperationException("Please annotate your model with @MongoEntity annotation.");
     }
     
-    public static MongoCursor find(String query, Object... params) {
+    public static long count(Bson filter) {
         throw new UnsupportedOperationException("Please annotate your model with @MongoEntity annotation.");
     }
     
-    public static MongoCursor find() {
+    public static long count(Bson filter, CountOptions options) {
+        throw new UnsupportedOperationException("Please annotate your model with @MongoEntity annotation.");
+    }
+    
+    public static FindCursor find(String query, Object... params) {
+        throw new UnsupportedOperationException("Please annotate your model with @MongoEntity annotation.");
+    }
+    
+    public static FindCursor find() {
+        throw new UnsupportedOperationException("Please annotate your model with @MongoEntity annotation.");
+    }
+    
+    public static FindCursor find(Bson filter, Bson sort) {
+        throw new UnsupportedOperationException("Please annotate your model with @MongoEntity annotation.");
+    }
+    
+    public static AggregateCursor aggregate(List<? extends Bson> pipeline) {
         throw new UnsupportedOperationException("Please annotate your model with @MongoEntity annotation.");
     }
     
@@ -50,23 +71,23 @@ public class MongoModel {
         throw new UnsupportedOperationException("Please annotate your model with @MongoEntity annotation.");
     }
     
-    public static long deleteAll(){
+    public static long deleteAll() {
     	throw new UnsupportedOperationException("Please annotate your model with @MongoEntity annotation.");
     }
     
-    public static void index(String indexString){
+    public static void index(String indexString) {
     	throw new UnsupportedOperationException("Please annotate your model with @MongoEntity annotation.");
     }
     
-    public static void dropIndex(String indexString){
+    public static void dropIndex(String indexString) {
     	throw new UnsupportedOperationException("Please annotate your model with @MongoEntity annotation.");
     }
     
-    public static void dropIndexes(){
+    public static void dropIndexes() {
     	throw new UnsupportedOperationException("Please annotate your model with @MongoEntity annotation.");
     }
     
-    public static String[] getIndexes(){
+    public static String[] getIndexes() {
     	throw new UnsupportedOperationException("Please annotate your model with @MongoEntity annotation.");
     }
     

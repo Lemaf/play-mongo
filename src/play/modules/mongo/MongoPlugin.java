@@ -1,4 +1,4 @@
-package play.modules.mongo;
+package play.modules.mongodb;
 
 import play.PlayPlugin;
 import play.classloading.ApplicationClasses.ApplicationClass;

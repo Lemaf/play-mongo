@@ -1,4 +1,4 @@
-package play.modules.mongo;
+package play.modules.mongodb;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
