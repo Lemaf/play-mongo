@@ -1,0 +1,8 @@
+self: play -> mongodb 0.5
+
+require:
+    - play
+    - org.mongodb -> mongo-java-driver 3.0.3
+    - org.codehaus.jackson -> jackson-core-asl 1.9.13
+    - org.codehaus.jackson -> jackson-mapper-asl 1.9.13
+        
